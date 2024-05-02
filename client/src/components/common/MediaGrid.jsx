@@ -8,10 +8,11 @@ const MediaGrid = ({ medias}) => {
         <Grid item xs={6} sm={4} md={3}>
           <MediaItem
             key={index}
-            id={movie._id}
+            id={movie.id}
             posterUrl={movie.posterUrl}
-            releaseDate={dayjs(movie.releaseDate).format("DD-MM-YYYY")}
+            releaseDate={dayjs(movie.releaseDate).format("DD/MM/YYYY")}
             title={movie.title}
+            rate={movie.averageRating}
           />
         </Grid>
       ))}

@@ -1,7 +1,7 @@
 import axios from "axios";
 import queryString from "query-string";
 
-const baseURL = "http://localhost:8282";
+const baseURL = "https://webn16-a8a4133f12c6.herokuapp.com";
 
 const publicClient = axios.create({
   baseURL,

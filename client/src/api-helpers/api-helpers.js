@@ -1,4 +1,3 @@
-import Favorite from "@mui/icons-material/Favorite";
 import axios from "axios";
 export const getAllMovies = async () => {
   const res = await axios.get("/movie").catch((err) => console.log(err));
@@ -9,23 +8,6 @@ export const getAllMovies = async () => {
 
   const data = await res.data;
   return data;
-};
-
-export const sendUserAuthRequest = async (data, signup) => {
-  const res = await axios
-    .post(`/user/${signup ? "signup" : "login"}`, {
-      name: signup ? data.name : "",
-      email: data.email,
-      password: data.password,
-    })
-    .catch((err) => console.log(err));
-
-  if (res.status !== 200 && res.status !== 201) {
-    console.log("Unexpected Error Occurred");
-  }
-
-  const resData = await res.data;
-  return resData;
 };
 
 export const sendAdminAuthRequest = async (data) => {
@@ -79,6 +61,7 @@ export const newBooking = async (data) => {
     .post("/booking", {
       movie: data.movie,
       seatNumber: data.seatNumber,
+      hour: data.hour,
       date: data.date,
       user: localStorage.getItem("userId"),
     })
@@ -87,6 +70,38 @@ export const newBooking = async (data) => {
   if (res.status !== 201) {
     return console.log("Unexpected Error");
   }
+  const resData = await res.data;
+  return resData;
+};
+export const addRate = async (data) => {
+  const res = await axios
+    .post("/rate", {
+      movie: data.movie,
+      rate: data.rate,
+      user: localStorage.getItem("userId"),
+    })
+    .catch((err) => console.log(err));
+
+  if (res.status !== 201) {
+    return console.log("Unexpected Error");
+  }
+  const resData = await res.data;
+  return resData;
+};
+export const updateRate = async (data) => {
+  const res = await axios
+    .put(
+      "/rate/update",
+      {
+        rateId: data.rateId,
+        rate: data.rate
+      }
+    )
+    .catch((err) => console.log(err));
+  if (res.status !== 201) {
+    return console.log("Unexpected Error Occurred");
+  }
+
   const resData = await res.data;
   return resData;
 };
@@ -99,6 +114,19 @@ export const newFavorite = async (data) => {
     .catch((err) => console.log(err));
 
   if (res.status !== 201) {
+    return console.log("Unexpected Error");
+  }
+  const resData = await res.data;
+  return resData;
+};
+export const getUserRating = async () => {
+  const id = localStorage.getItem("userId");
+  if(id == null) return console.log("not find id");
+  const res = await axios
+    .get(`/user/ratings/${id}`)
+    .catch((err) => console.log(err));
+
+  if (res.status !== 200) {
     return console.log("Unexpected Error");
   }
   const resData = await res.data;
@@ -118,6 +146,7 @@ export const getUserBooking = async () => {
 };
 export const getUserFavorite = async () => {
   const id = localStorage.getItem("userId");
+  if(id == null) return console.log("Not find id");
   const res = await axios
     .get(`/user/favorites/${id}`)
     .catch((err) => console.log(err));
@@ -152,6 +181,30 @@ export const deleteFavorite = async (id) => {
   const resData = await res.data;
   return resData;
 };
+export const deleteMovie = async (id) => {
+  const res = await axios
+    .delete(`/movie/${id}`)
+    .catch((err) => console.log(err));
+
+  if (res.status !== 200) {
+    return console.log("Unepxected Error");
+  }
+
+  const resData = await res.data;
+  return resData;
+};
+export const updateAverageRating = async (id) => {
+  const res = await axios
+    .put(`/movie/update/${id}`)
+    .catch((err) => console.log(err));
+
+  if (res.status !== 200) {
+    return console.log("Unepxected Error");
+  }
+
+  const resData = await res.data;
+  return resData;
+};
 export const getUserDetails = async () => {
   const id = localStorage.getItem("userId");
   const res = await axios.get(`/user/${id}`).catch((err) => console.log(err));
@@ -171,9 +224,14 @@ export const addMovie = async (data) => {
         description: data.description,
         releaseDate: data.releaseDate,
         posterUrl: data.posterUrl,
-        fetaured: data.fetaured,
         actors: data.actors,
+        backgroundUrl: data.backgroundUrl,
+        videoUrl: data.videoUrl,
+        genres: data.genres,
+        backdrops: data.backdrops,
         admin: localStorage.getItem("adminId"),
+        averageRating: data.averageRating,
+        mons: data.mons, tues: data.tues, weds: data.weds, thus: data.thus, fris: data.fris, sats: data.sats, suns: data.suns
       },
       {
         headers: {
@@ -193,11 +251,40 @@ export const addMovie = async (data) => {
 
 export const getAdminById = async () => {
   const adminId = localStorage.getItem("adminId");
+  if(adminId == null) return console.log("Not find adminId");
   const res = await axios
     .get(`/admin/${adminId}`)
     .catch((err) => console.log(err));
 
   if (res.status !== 200) {
+    return console.log("Unexpected Error Occurred");
+  }
+
+  const resData = await res.data;
+  return resData;
+};
+
+export const updateMovie = async (data) => {
+  const res = await axios
+    .put(
+      "/movie/update",
+      {
+        movieId: data.movieId,
+        title: data.title,
+        description: data.description,
+        releaseDate: data.releaseDate,
+        posterUrl: data.posterUrl,
+        actors: data.actors,
+        backgroundUrl: data.backgroundUrl,
+        videoUrl: data.videoUrl,
+        genres: data.genres,
+        backdrops: data.backdrops,
+        mons: data.mons, tues: data.tues, weds: data.weds, thus: data.thus, fris: data.fris, sats: data.sats, suns: data.suns
+      }
+    )
+    .catch((err) => console.log(err));
+
+  if (res.status !== 201) {
     return console.log("Unexpected Error Occurred");
   }
 

@@ -1,11 +1,10 @@
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import SlideshowOutlinedIcon from "@mui/icons-material/SlideshowOutlined";
-import LiveTvOutlinedIcon from "@mui/icons-material/LiveTvOutlined";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 import LockResetOutlinedIcon from "@mui/icons-material/LockResetOutlined";
-
+import {Add, Movie } from "@mui/icons-material";
 const main = [
   {
     display: "Trang chủ",
@@ -19,12 +18,6 @@ const main = [
     icon: <SlideshowOutlinedIcon />,
     state: "movie"
   },
-  /*{
-    display: "tv series",
-    path: "/tv",
-    icon: <LiveTvOutlinedIcon />,
-    state: "tv"
-  },*/
   {
     display: "Tìm kiếm",
     path: "/search",
@@ -54,6 +47,21 @@ const user = [
   }
 ];
 
-const menuConfigs = { main, user };
+const admin = [
+  {
+    display: "Thêm phim mới",
+    path: "/addmovie",
+    icon: <Add />,
+    state: "addmovie"
+  },
+  {
+    display: "Danh sách phim đã thêm",
+    path: "/listmovie",
+    icon: <Movie />,
+    state: "listmovie"
+  }
+];
+
+const menuConfigs = { main, user, admin };
 
 export default menuConfigs;

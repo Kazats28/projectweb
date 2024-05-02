@@ -1,8 +1,5 @@
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { useEffect, useRef } from "react";
-import { SwiperSlide } from "swiper/react";
-import tmdbConfigs from "../../api/configs/tmdb.configs";
-import NavigationSwiper from "./NavigationSwiper";
 
 const MediaVideo = ({ Url }) => {
   const iframeRef = useRef();

@@ -2,18 +2,18 @@ import { useSelector, useDispatch } from "react-redux";
 import MenuIcon from "@mui/icons-material/Menu";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import WbSunnyOutlinedIcon from "@mui/icons-material/WbSunnyOutlined";
-import { AppBar, Box, Button, IconButton, Stack, Toolbar, Typography, useScrollTrigger } from "@mui/material";
+import { AppBar, Box, Button, IconButton, Stack, Toolbar, useScrollTrigger } from "@mui/material";
 import { cloneElement, useState } from "react";
 import { Link } from "react-router-dom";
 import menuConfigs from "../../configs/menu.configs";
 import { themeModes } from "../../configs/theme.configs";
 import { setAuthModalOpen } from "../../redux/features/authModalSlice";
+import { setAdminModalOpen } from "../../redux/features/adminModalSlice";
 import { setThemeMode } from "../../redux/features/themeModeSlice";
 import Logo from "./Logo";
 import UserMenu from "./UserMenu";
 import Sidebar from "./Sidebar";
-import { light } from "@mui/material/styles/createPalette";
-
+import AdminMenu from "./AdminMenu";
 const ScrollAppBar = ({ children, window }) => {
   const { themeMode } = useSelector((state) => state.themeMode);
   const trigger = useScrollTrigger({
@@ -31,18 +31,21 @@ const ScrollAppBar = ({ children, window }) => {
 };
 const Topbar = () => {
   const { user } = useSelector((state) => state.user);
+  const { admin } = useSelector((state) => state.admin);
   const { appState } = useSelector((state) => state.appState);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { themeMode } = useSelector((state) => state.themeMode);
   const dispatch = useDispatch();
-
   const onSwithTheme = () => {
     const theme = themeMode === themeModes.dark ? themeModes.light : themeModes.dark;
     dispatch(setThemeMode(theme));
   };
-
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
+  document.addEventListener('keydown', function(event) {
+    if (event.ctrlKey && event.altKey && event.key === 'm') {
+      if(!localStorage.getItem("userId") && !localStorage.getItem("adminId")) dispatch(setAdminModalOpen(true));
+    }
+  });
   return (
     <>
       <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} />
@@ -93,13 +96,14 @@ const Topbar = () => {
             {/* main menu */}
             {/* user menu */}
             <Stack spacing={3} direction="row" alignItems="center">
-              {!user && <Button
+              {!user && !admin && <Button
                 variant="contained"
                 onClick={() => dispatch(setAuthModalOpen(true))}
               >
                 đăng nhập
               </Button>}
             </Stack>
+            {admin && <AdminMenu />}
             {user && <UserMenu />}
             {/* user menu */}
           </Toolbar>

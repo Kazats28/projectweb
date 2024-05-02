@@ -1,16 +1,10 @@
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import { Box, Button, Stack, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { Box, Stack, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
-import tmdbConfigs from "../../api/configs/tmdb.configs";
 import uiConfigs from "../../configs/ui.configs";
 import { routesGen } from "../../routes/routes";
-import FavoriteIcon from "@mui/icons-material/Favorite";
 import CircularRate from "./CircularRate";
-import { useSelector } from "react-redux";
-import favoriteUtils from "../../utils/favorite.utils";
 
-const MediaItem = ({ title, releaseDate, posterUrl, id }) => {
+const MediaItem = ({ title, releaseDate, posterUrl, id, rate }) => {
   return (
     <Link to={routesGen.mediaDetail(id)}>
       <Box sx={{
@@ -23,17 +17,6 @@ const MediaItem = ({ title, releaseDate, posterUrl, id }) => {
         {/* movie or tv item */}
         {(
           <>
-            {/*favoriteUtils.check({ listFavorites, mediaId: media.id }) && (
-              <FavoriteIcon
-                color="primary"
-                sx={{
-                  position: "absolute",
-                  top: 2,
-                  right: 2,
-                  fontSize: "2rem"
-                }}
-              />
-            )*/}
             <Box className="media-back-drop" sx={{
               opacity: { xs: 1, md: 0 },
               transition: "all 0.3s ease",
@@ -58,9 +41,9 @@ const MediaItem = ({ title, releaseDate, posterUrl, id }) => {
               }}
             >
               <Stack spacing={{ xs: 1, md: 2 }}>
-                {/*rate && <CircularRate value={rate} />*/}
+                <CircularRate value={rate} />
 
-                <Typography>Ngày công chiếu: {releaseDate.split("T")[0]}</Typography>
+                <Typography>Ngày công chiếu: {releaseDate}</Typography>
 
                 <Typography
                   variant="body1"

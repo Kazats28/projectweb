@@ -1,23 +1,17 @@
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { Box, Button, Chip, Divider, Stack, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { Autoplay } from "swiper";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { toast } from "react-toastify";
 
 import { setGlobalLoading } from "../../redux/features/globalLoadingSlice";
 import { routesGen } from "../../routes/routes";
 
 import uiConfigs from "../../configs/ui.configs";
-
 import CircularRate from "./CircularRate";
-
-import tmdbConfigs from "../../api/configs/tmdb.configs";
-import genreApi from "../../api/modules/genre.api";
 import {getAllMovies} from "../../api-helpers/api-helpers";
-const HeroSlide = ({ mediaType, mediaCategory }) => {
+const HeroSlide = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
 
@@ -26,27 +20,10 @@ const HeroSlide = ({ mediaType, mediaCategory }) => {
   useEffect(() => {
     dispatch(setGlobalLoading(true));
     getAllMovies()
-      .then((data) => setMovies(data.movies))
+      .then((data) => setMovies(data.movies.slice(0, 4)))
       .catch((err) => console.log(err));
     dispatch(setGlobalLoading(false));
   }, []);
-
-    // const getGenres = async () => {
-    //   dispatch(setGlobalLoading(true));
-    //   const { response, err } = await genreApi.getList({ mediaType });
-
-    //   if (response) {
-    //     setGenres(response.genres);
-    //     getMedias();
-    //   }
-    //   if (err) {
-    //     toast.error(err.message);
-    //     setGlobalLoading(false);
-    //   }
-    // };
-
-    //getMedias();
-  //}, [mediaType, mediaCategory, dispatch]);
 
   return (
     <Box sx={{
@@ -67,12 +44,12 @@ const HeroSlide = ({ mediaType, mediaCategory }) => {
       <Swiper
         grabCursor={true}
         loop={true}
-        // modules={[Autoplay]}
+        modules={[Autoplay]}
         style={{ width: "100%", height: "max-content" }}
-      // autoplay={{
-      //   delay: 3000,
-      //   disableOnInteraction: false
-      // }}
+      autoplay={{
+        delay: 3000,
+        disableOnInteraction: false
+      }}
       >
         {movies.map((movie, index) => (
           <SwiperSlide key={index}>
@@ -127,7 +104,7 @@ const HeroSlide = ({ mediaType, mediaCategory }) => {
 
                   <Stack direction="row" spacing={1} alignItems="center">
                     {/* rating */}
-                    {/*<CircularRate value={movie.vote_average} />
+                    <CircularRate value={movie.averageRating} />
                     {/* rating */}
 
                     <Divider orientation="vertical" />
@@ -155,9 +132,8 @@ const HeroSlide = ({ mediaType, mediaCategory }) => {
                   <Button
                     variant="contained"
                     size="large"
-                    //startIcon={<PlayArrowIcon />}
                     component={Link}
-                    to={routesGen.mediaDetail(movie._id)}
+                    to={routesGen.mediaDetail(movie.id)}
                     sx={{ width: "max-content" }}
                   >
                     chi tiết

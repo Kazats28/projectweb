@@ -3,8 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 export const userSlice = createSlice({
   name: "User",
   initialState: {
-    user: null,
-    listFavorites: []
+    user: null
   },
   reducers: {
     setUser: (state, action) => {
@@ -21,25 +20,12 @@ export const userSlice = createSlice({
       }
 
       state.user = action.payload;
-    },
-    // setListFavorites: (state, action) => {
-    //   state.listFavorites = action.payload;
-    // },
-    // removeFavorite: (state, action) => {
-    //   const { movieId } = action.payload;
-    //   state.listFavorites = [...state.listFavorites].filter(e => e.movie._id.toString() !== movieId.toString());
-    // },
-    // addFavorite: (state, action) => {
-    //   state.listFavorites = [action.payload, ...state.listFavorites];
-    // }
+    }
   }
 });
 
 export const {
-  setUser,
-  setListFavorites,
-  addFavorite,
-  removeFavorite
+  setUser
 } = userSlice.actions;
 
 export default userSlice.reducer;

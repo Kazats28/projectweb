@@ -1,7 +1,7 @@
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import { Grid } from "@mui/material";
+import { Grid, Modal, Rating } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { Box, Button, Chip, Divider,FormLabel, TextField, Stack, Typography } from "@mui/material";
 import React,{Fragment, useEffect, useState, useRef } from "react";
@@ -13,38 +13,111 @@ import Container from "../components/common/Container";
 import ImageHeader from "../components/common/ImageHeader";
 
 import uiConfigs from "../configs/ui.configs";
-import tmdbConfigs from "../api/configs/tmdb.configs";
-import mediaApi from "../api/modules/media.api";
 
 import { setGlobalLoading } from "../redux/features/globalLoadingSlice";
 import { setAuthModalOpen } from "../redux/features/authModalSlice";
-//import { addFavorite, removeFavorite, setListFavorites } from "../redux/features/userSlice";
 
 import CastSlide from "../components/common/CastSlide";
 import MediaVideosSlide from "../components/common/MediaVideosSlide";
 import BackdropSlide from "../components/common/BackdropSlide";
-import PosterSlide from "../components/common/PosterSlide";
-import RecommendSlide from "../components/common/RecommendSlide";
-import MediaSlide from "../components/common/MediaSlide";
-import MediaReview from "../components/common/MediaReview";
-import { getBookings, getMovieDetails, newBooking, getUserFavorite, newFavorite, deleteFavorite} from "../api-helpers/api-helpers";
+import { getBookings, getMovieDetails, newBooking, getUserFavorite, newFavorite, deleteFavorite, addRate, updateRate, getUserRating, updateAverageRating} from "../api-helpers/api-helpers";
 import dayjs from "dayjs";
 const MediaDetail = () => {
   const id = useParams().id;
   const [movie, setMovie] = useState();
   const dispatch = useDispatch();
-  const [inputs, setInputs] = useState({ seatNumber: "", date: "" });
+  const [inputs, setInputs] = useState({ seatNumber: "", date: "", hour: "" });
   const [selectedSeats, setSelectedSeats] = useState([]);
+  const [selectedDay, setSelectedDay] = useState([]);
+  const [listDay, setListDay] = useState([]);
+  const [listTime, setListTime] = useState([]);
+  const [selectedTime, setSelectedTime] = useState([]);
   const [bookings, setBookings] = useState();
   const [seatBooking, setSeatBooking] = useState(Array(selectedSeats.length).fill(false));
-  //const seatBooking = Array(selectedSeats.length).fill(false);
   let seatTemp;
   const [onRequest, setOnRequest] = useState(false);
   const { user} = useSelector((state) => state.user);
   const [listFavorites, setListFavorites] = useState([]);
+  const [listRates, setListRates] = useState([]);
   const bookingsRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [value, setValue] = useState(0);
+  const handleChange = async (event, newValue) => {
+    if(user){
+      if(bookings.some(e => e.user == localStorage.getItem("userId"))){
+        if(listRates.some(e => e.movie.id == id)){
+          const temp = listRates.find(e => e.movie.id == id);
+          await updateRate({rateId: temp.id, rate: newValue})
+          .then((res) => console.log(res))
+          .catch((err) => console.log(err));
+        }
+        else{
+          await addRate({rate: newValue, movie: movie.id})
+          .then((res) => console.log(res))
+          .catch((err) => console.log(err));
+          getListRate();
+        }
+      }
+      await updateAverageRating(id)
+      .then((res) => console.log(res))
+      .catch((err) => console.log(err));
+    }
+    setValue(newValue);
+  };
+  const handleOpen = () => {
+    if(!inputs.seatNumber)
+    {
+      toast.error("Chưa chọn vị trí ngồi!");
+      return;
+    }
+    setIsOpen(true);
+  };
+  const handleClose = () => {
+    setIsOpen(false);
+  };
+  const getNextNDays = () => {
+    const today = new Date();
+    const result = [];
+  
+    for (let i = 0; i < 7; i++) {
+      let nextDate = new Date(today);
+      nextDate.setDate(today.getDate() + i);
+  
+      if (nextDate.getDate() < today.getDate() + i) {
+        const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+        const daysToAdd = today.getDate() + i - lastDayOfMonth;
+        nextDate = new Date(today.getFullYear(), today.getMonth() + 1, daysToAdd);
+      }
+  
+      result.push(nextDate);
+    }
+  
+    setListDay(result);
+  };
+  const getListBooking = async () => {
+    await getBookings(id)
+      .then((res) => setBookings(res.booking))
+      .catch((err) => console.log(err));
+  };
+  const getListRate = async () => {
+    await getUserRating()
+    .then((res) => {
+      setListRates(res.rates);
+      const rate = res.rates.find(e => e.movie.id == id);
+      if(rate) setValue(rate.rate);
+    })
+    .catch((err) => console.log(err));
+  };
+  useEffect(() => {
+    dispatch(setGlobalLoading(true));
+    updateAverageRating(id)
+      .then((res) => {console.log(res)})
+      .catch((err) => {console.log(err)});
+    dispatch(setGlobalLoading(false));
+  }, []);
   useEffect(() => {
     window.scrollTo(0, 0);
+    getNextNDays();
     dispatch(setGlobalLoading(true));
     getMovieDetails(id) 
       .then((res) => setMovie(res.movie))
@@ -53,40 +126,25 @@ const MediaDetail = () => {
   }, [id]);
   useEffect(() => {
     dispatch(setGlobalLoading(true));
-    getBookings(id)
-      .then((res) => setBookings(res.booking))
-      .catch((err) => console.log(err));
+    getListBooking();
     dispatch(setGlobalLoading(false));
   }, [id]);
   useEffect(() => {
     dispatch(setGlobalLoading(true));
+    getListRate();
+    dispatch(setGlobalLoading(false));
+  }, [user]);
+  useEffect(() => {
+    dispatch(setGlobalLoading(true));
     getUserFavorite()
       .then((res) => {
-        setListFavorites(res.favorites);
-      })
+        setListFavorites(res.favorites)})
       .catch((err) => console.log(err));
     dispatch(setGlobalLoading(false));
-  }, []);
-  const handleChange = (e) => {
-    const newSeatNumber = e.target.value;
-    if(seatBooking[parseInt(newSeatNumber) - 1]){
-      return;
-    }
-    setInputs((prevInputs) => ({
-      ...prevInputs,
-      seatNumber: newSeatNumber 
-    }));
-  
-    // Update selected seats based on new seat number
-    const newSelectedSeats = Array(selectedSeats.length).fill(false);
-    const seatIndex = parseInt(newSeatNumber) - 1;
-    if (seatIndex >= 0 && seatIndex < 50) {
-      newSelectedSeats[seatIndex] = true;
-    }
-    setSelectedSeats(newSelectedSeats);
-  };
+  }, [user]);
   
   const handleSeatSelect = (index) => {
+    getListBooking();
     const newSelectedSeats = Array(selectedSeats.length).fill(false);
     newSelectedSeats[index] = true;
     setSelectedSeats(newSelectedSeats);
@@ -95,24 +153,141 @@ const MediaDetail = () => {
       seatNumber: index + 1
     }));
   };   
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     console.log(inputs);
-    newBooking({ ...inputs, movie: movie._id })
+    await newBooking({ ...inputs, movie: movie.id })
       .then((res) => toast.success("Đặt vé thành công!"))
       .catch((err) => console.log(err));
     const newSeatBooking = seatBooking;
     newSeatBooking[inputs.seatNumber - 1] = true;
     setSeatBooking(newSeatBooking);
     setSelectedSeats(Array(selectedSeats.length).fill(false));
+    handleClose();
     setInputs((prevInputs) => ({
       ...prevInputs,
-      seatNumber: "",
-      date: "" 
+      seatNumber: ""
     }));
-    //window.location.reload();
+  };
+  const handleTimeSelect = (i) => {
+    getListBooking();
+    const newSelectedTime = Array(5).fill(false);
+    newSelectedTime[i] = true;
+    setSelectedTime(newSelectedTime);
+    setInputs((prevState) => ({
+      ...prevState,
+      hour: listTime[i]
+    }));
+  };  
+  const handleDaySelect = (i) => {
+    const newSelectedDay = Array(7).fill(false);
+    newSelectedDay[i] = true;
+    setSelectedDay(newSelectedDay);
+    switch (listDay[i].getDay()) {
+      case 0:
+        setListTime(movie.suns);
+        break;
+      case 1:
+        setListTime(movie.mons);
+        break;
+      case 2:
+        setListTime(movie.tues);
+        break;
+      case 3:
+        setListTime(movie.weds);
+        break;
+      case 4:
+        setListTime(movie.thus);
+        break;
+      case 5:
+        setListTime(movie.fris);
+        break;
+      case 6:
+        setListTime(movie.sats);
+        break;
+      default:
+        break;
+    }
+    setSelectedTime([]);
+    setInputs((prevState) => ({
+      ...prevState,
+      date: listDay[i],
+      hour: ""
+    }));
+  };
+  const renderTime = () => {
+    const times = [];
+    for (let i = 0; i < listTime.length; i++) {
+      let isSelected = selectedTime[i] || false;
+      const colorByState = {
+        normal: "#949494",
+        selected: "#2e7d31",
+      }; 
+      let color;
+      if (isSelected) {
+        color = colorByState.selected;
+      } else {
+        color = colorByState.normal;
+      }
+      const split = listTime.length > 3 ? listTime.length : 3;
+      times.push(
+        <Grid item xs={12/split} md={12/split}>
+          <Grid>
+            <Button
+              variant="contained"
+              style={{ backgroundColor: color, color: "white"}}
+              onClick={() => handleTimeSelect(i)}
+              //sx={{ m: 1 }}
+              sx={{m:1, minWidth: 0 }}
+              fullWidth
+            >
+              {listTime[i]}
+            </Button>
+          </Grid>
+        </Grid>
+      );
+    }
+    return times;
+  };  
+  const renderDay = () => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      let isSelected = selectedDay[i] || false;
+      const colorByState = {
+        normal: "#949494",
+        selected: "#2e7d31",
+      }; 
+      let color;
+      if (isSelected) {
+        color = colorByState.selected;
+      } else {
+        color = colorByState.normal;
+      }
+      days.push(
+        <Grid item xs={12/7} md={12/7}>
+          <Grid>
+            <Button
+              variant="contained"
+              style={{ backgroundColor: color, color: "white"}}
+              onClick={() => handleDaySelect(i)}
+              //sx={{ m: 1 }}
+              sx={{m:1, minWidth: 0 }}
+              fullWidth
+            >
+              {dayjs(listDay[i]).format("DD/MM")}
+            </Button>
+          </Grid>
+        </Grid>
+      );
+    }
+    return days;
   };
   const renderSeats = () => {
+    const temp = dayjs(inputs.date).format("DD/MM/YYYY");
+    {bookings && bookings.forEach((booking, index) => {
+      const temp_date = dayjs(booking.date).format("DD/MM/YYYY");
+      seatBooking[booking.seatNumber - 1] = (temp == temp_date && booking.hour == inputs.hour);
+    })}
     const seats = [];
     for (let i = 0; i < 10; i++) {
       const column = [];
@@ -126,7 +301,7 @@ const MediaDetail = () => {
           index = seatTemp;
         }
         const colorByState = {
-          normal: "#1876d2",
+          normal: "#949494",
           selected: "#2e7d31",
           booked: "#d3302f",
         };
@@ -158,25 +333,25 @@ const MediaDetail = () => {
     }
     return seats;
   };
-  const updateFavorite = () => {
-    getUserFavorite()
+  const updateFavorite = async () => {
+    await getUserFavorite()
       .then((res) => {
         setListFavorites(res.favorites);
       })
       .catch((err) => console.log(err));
   };
-  const onFavoriteClick = () => {
+  const onFavoriteClick = async () => {
     if (!user) return dispatch(setAuthModalOpen(true));
 
     if (onRequest) return;
 
-    if (listFavorites.some(e => e.movie._id.toString() === id.toString())) {
+    if (listFavorites.some(e => e.movie.id.toString() === id.toString())) {
       onRemoveFavorite();
       return;
     }
 
     setOnRequest(true);
-    newFavorite({movie: movie._id })
+    await newFavorite({movie: movie.id })
       .then((res) => {updateFavorite(); toast.success("Thêm phim yêu thích thành công!");})
       .catch((err) => console.log(err));
     setOnRequest(false);
@@ -185,16 +360,15 @@ const MediaDetail = () => {
     if (!user) return dispatch(setAuthModalOpen(true));
     bookingsRef.current.scrollIntoView({ behavior: "smooth" });
   };
-  const onRemoveFavorite = () => {
+  const onRemoveFavorite = async () => {
     if (onRequest) return;
     setOnRequest(true);
-    const favorite = listFavorites.find(e => e.movie._id.toString() === movie._id.toString());
-    deleteFavorite(favorite.id)
+    const favorite = listFavorites.find(e => e.movie.id.toString() === movie.id.toString());
+    await deleteFavorite(favorite.id)
       .then((res) => {updateFavorite(); toast.success("Xóa phim yêu thích thành công!");})
       .catch((err) => console.log(err));
     setOnRequest(false);
   };
-  
   return (
     <div>
       {movie && 
@@ -238,14 +412,14 @@ const MediaDetail = () => {
                         fontWeight="700"
                         sx={{ ...uiConfigs.style.typoLines(2, "left") }}
                       >
-                        {`${movie.title} ${dayjs(movie.releaseDate).format("DD-MM-YYYY")}`}
+                        {`${movie.title} ${dayjs(movie.releaseDate).format("DD/MM/YYYY")}`}
                       </Typography>
                       {/* title */}
     
                       {/* rate and genres */}
                       <Stack direction="row" spacing={1} alignItems="center">
                         {/* rate */}
-                        {/*<CircularRate value={media.vote_average} />
+                        <CircularRate value={movie.averageRating} />
                         {/* rate */}
                         <Divider orientation="vertical" />
                         {/* genres */}
@@ -271,6 +445,17 @@ const MediaDetail = () => {
                       {/* overview */}
     
                       {/* buttons */}
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Rating
+                            name="rating"
+                            value={value}
+                            onChange={handleChange}
+                            precision={0.5}
+                            min={0}
+                            max={5}
+                            />
+                          <Typography ml={2} variant="body2">{value * 2}</Typography>
+                      </Box>
                       <Stack direction="row" spacing={1}>
                         <LoadingButton
                           variant="text"
@@ -279,18 +464,18 @@ const MediaDetail = () => {
                             "& .MuiButon-starIcon": { marginRight: "0" }
                           }}
                           size="large"
-                          startIcon={listFavorites.some(e => e.movie._id.toString() === id.toString()) ? <FavoriteIcon /> : <FavoriteBorderOutlinedIcon />}
+                          startIcon={listFavorites.some(e => e.movie.id.toString() === id.toString()) ? <FavoriteIcon /> : <FavoriteBorderOutlinedIcon />}
                           loadingPosition="start"
                           loading={onRequest}
                           onClick={onFavoriteClick}
-                        />
+                          />
                         <Button
                           variant="contained"
                           sx={{ width: "max-content" }}
                           size="large"
                           //startIcon={<PlayArrowIcon />}
                           onClick={onBookingClick}
-                        >
+                          >
                           đặt vé
                         </Button>
                       </Stack>
@@ -307,6 +492,76 @@ const MediaDetail = () => {
                 </Box>
               </Box>
               {/* media content */}
+              <div>
+                <Modal
+                    open={isOpen}
+                    onClose={handleClose}
+                    >
+                  <Box sx={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "100%",
+                    maxWidth: "600px",
+                    padding: 4,
+                    outline: "none"
+                  }}>
+                    <Box sx={{ padding: 4, boxShadow: 24, backgroundColor: "background.paper" }}>
+                      <Box sx={{ textAlign: "center", marginBottom: "2rem" }} >
+                        <Stack spacing={1}>
+                          <Typography
+                            variant="h4"
+                            >
+                            Pay with PayPal
+                          </Typography>
+                        </Stack>
+                      </Box>
+                      <Stack spacing={1}>
+                        <FormLabel>Mã số thẻ</FormLabel>
+                        <TextField
+                          type="text"
+                          placeholder="XXXX-XXXX-XXXX-XXXX"
+                          fullWidth
+                          color="success"
+                        />
+                        <FormLabel>Ngày hết hạn</FormLabel>
+                        <TextField
+                          type="text"
+                          placeholder="MM/YY"
+                          fullWidth
+                          color="success"
+                        />
+                        <FormLabel>CVV</FormLabel>
+                        <TextField
+                          type="text"
+                          placeholder="XXX"
+                          fullWidth
+                          color="success"
+                          />
+                      </Stack>
+                      <Box display="flex" justifyContent="center" >
+                        <Box width={"80%"} marginTop={3}>
+                          <form onSubmit={handleSubmit}>
+                            <Box display="flex" >             
+                              <Button type="submit" sx={{margin: "auto",bgcolor: "#add8e6",":hover": {bgcolor: "#121217"}}}>
+                                Thanh toán
+                              </Button>                 
+                            </Box>
+                          </form>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Modal>
+              </div>
+              {/* media backdrop */}
+              {movie.backdrops.length > 0 && (
+                <Container header="Một số cảnh trong phim">
+                  <BackdropSlide backdrops={movie.backdrops} />
+                </Container>
+              )}
+              {/* media backdrop */}
               {/* media videos */}
               <div style={{ paddingTop: "2rem" }}>
                 <Container header="Video Trailer">
@@ -318,74 +573,93 @@ const MediaDetail = () => {
               <div ref={bookingsRef} style={{ paddingTop: "2rem" }}>
                 {user && (
                   <Container header="Đặt vé">
-                    {bookings && bookings.map((booking, index) => (
-                      seatBooking[booking.seatNumber - 1] = true
-                    ))}
                     {movie && (
                       <Fragment>
-                        <Box display="flex" justifyContent="center" >
-                          <Box width={"50%"} paddingTop={3} >
-                            <form onSubmit={handleSubmit}>
-                              <Box
-                                padding={5}
-                                margin={"auto"}
-                                display="flex"
-                                flexDirection={"column"}
-                              >             
-                                <FormLabel>Vị trí ghế</FormLabel>
-                                <TextField
-                                  name="seatNumber"
-                                  value={inputs.seatNumber}
-                                  onChange={handleChange}
-                                  type={"number"}
-                                  margin="normal"
-                                  variant="standard"
-                                  inputProps={{ min: "1", max: "50" }} // Giả sử bảng có tối đa 50 chỗ ngồi
-                                />
-                                <FormLabel>Ngày đặt vé</FormLabel>
-                                <TextField
-                                  name="date"
-                                  type={"date"}
-                                  margin="normal"
-                                  variant="standard"
-                                  value={inputs.date}
-                                  onChange={(e) => setInputs((prevState) => ({ ...prevState, date: e.target.value }))}
-                                />
-                                <Button type="submit" sx={{margin: "auto",bgcolor: "#add8e6",":hover": {bgcolor: "#121217"}}}>
-                                  Đặt vé
-                                </Button>                 
-                              </Box>
-                              <Box display="flex" alignItems="center" > 
-                                <Box display="flex" alignItems="center" marginRight={2}>
-                                  <Box width={20} height={20} bgcolor="#d3302f" marginRight={1}></Box>
-                                  <Typography>Đã bán</Typography>
-                                </Box>
-                                <Box display="flex" alignItems="center" marginRight={2}>
-                                  <Box width={20} height={20} bgcolor="#2e7d31" marginRight={1}></Box>
-                                  <Typography>Đã chọn</Typography>
-                                </Box>
-                                <Box display="flex" alignItems="center" marginRight={2}>
-                                  <Box width={20} height={20} bgcolor="#1876d2" marginRight={1}></Box>
-                                  <Typography>Trống</Typography>
-                                </Box>
-                              </Box>    
-                              <Box display="flex" alignItems="center" marginLeft={"2.5%"}>                              
-                                <Button
-                                  variant="contained"
-                                  color="primary"
-                                  sx={{ m: 1, width: "650px"}}
-                                >
-                                  MÀN HÌNH
-                                </Button>                     
-                              </Box>
-                            </form>
-                          </Box>
+                        <Box display={"flex"} justifyContent={"center"}>
+                          <Typography
+                            variant="h5"
+                            fontSize={{ xs: "1rem", md: "1rem", lg: "2rem" }}
+                            fontWeight="700"
+                            sx={{ ...uiConfigs.style.typoLines(2, "left") }}
+                          >
+                            Chọn ngày chiếu phim
+                          </Typography>
                         </Box>
                         <Box display={"flex"} justifyContent={"center"}>
-                          <Grid width={{xs: "100%", sm:"80%", md:"60%"}} container spacing={{ xs: 0.5, md: 1 }}>
-                            {renderSeats()}
+                          <Grid justifyContent={"center"} width={{xs: "90%", sm:"70%", md:"50%"}} container spacing={{ xs: 1, md: 2 }}>
+                            {renderDay()}
                           </Grid>
                         </Box>
+                        {inputs.date && (
+                          <Box>
+                            <Box display={"flex"} justifyContent={"center"}>
+                              <Typography
+                                variant="h5"
+                                fontSize={{ xs: "1rem", md: "1rem", lg: "2rem" }}
+                                fontWeight="700"
+                                sx={{ ...uiConfigs.style.typoLines(2, "left") }}
+                              >
+                                Chọn giờ chiếu phim
+                              </Typography>
+                            </Box>
+                            <Box display={"flex"} justifyContent={"center"}>
+                              <Grid justifyContent={"center"} width={{xs: "90%", sm:"70%", md:"50%"}} container spacing={{ xs: 1, md: 2 }}>
+                                {renderTime()}
+                              </Grid>
+                            </Box>
+                          </Box>
+                        )}
+                        {inputs.hour && (
+                          <Box>
+                            <Box display={"flex"} justifyContent={"center"}>
+                              <Typography
+                                variant="h5"
+                                fontSize={{ xs: "1rem", md: "1rem", lg: "2rem" }}
+                                fontWeight="700"
+                                sx={{ ...uiConfigs.style.typoLines(2, "left") }}
+                              >
+                                Vị trí ghế ngồi
+                              </Typography>
+                            </Box>
+                            <Box display="flex" justifyContent="center" > 
+                              <Box display="flex" alignItems="center" marginRight={2}>
+                                <Box width={20} height={20} bgcolor="#d3302f" marginRight={1}></Box>
+                                <Typography>Đã bán</Typography>
+                              </Box>
+                              <Box display="flex" alignItems="center" marginRight={2}>
+                                <Box width={20} height={20} bgcolor="#2e7d31" marginRight={1}></Box>
+                                <Typography>Đã chọn</Typography>
+                              </Box>
+                              <Box display="flex" alignItems="center" marginRight={2}>
+                                <Box width={20} height={20} bgcolor="#949494" marginRight={1}></Box>
+                                <Typography>Trống</Typography>
+                              </Box>
+                            </Box>
+                            <Box display="flex" justifyContent="center">                                                 
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                sx={{ m: 1, width: {xs: "90%", sm:"70%", md:"50%"}}}
+                              >
+                                MÀN HÌNH
+                              </Button>                     
+                            </Box>
+                            <Box display={"flex"} justifyContent={"center"}>
+                              <Grid width={{xs: "100%", sm:"80%", md:"60%"}} container spacing={{ xs: 0.5, md: 1 }}>
+                                {renderSeats()}
+                              </Grid>
+                            </Box>
+                            <Box display="flex" justifyContent="center" >
+                              <Box width={"80%"} marginTop={3}>
+                                <Box display="flex" justifyContent={"center"}>             
+                                  <Button onClick={handleOpen} sx={{bgcolor: "#add8e6",":hover": {bgcolor: "#121217"}, width: {xs: "20%", sm:"15%", md:"10%"}}}>
+                                    Đặt vé
+                                  </Button>                 
+                                </Box>
+                              </Box>
+                            </Box>
+                          </Box>
+                        )}
                       </Fragment>
                     )}
                   </Container>
@@ -393,39 +667,7 @@ const MediaDetail = () => {
               </div>
               {/* media videos */}
               
-              {/* media backdrop */}
-              {/*{media.images.backdrops.length > 0 && (
-                <Container header="backdrops">
-                  <BackdropSlide backdrops={media.images.backdrops} />
-                </Container>
-              )}
-              {/* media backdrop */}
     
-              {/* media posters */}
-              {/*{media.images.posters.length > 0 && (
-                <Container header="posters">
-                  <PosterSlide posters={media.images.posters} />
-                </Container>
-              )}
-              {/* media posters */}
-    
-              {/* media reviews */}
-              {/*<MediaReview reviews={media.reviews} media={media} mediaType={mediaType} />
-              {/* media reviews */}
-    
-              {/* media recommendation */}
-              {/*<Container header="you may also like">
-                {media.recommend.length > 0 && (
-                  <RecommendSlide medias={media.recommend} mediaType={mediaType} />
-                )}
-                {media.recommend.length === 0 && (
-                  <MediaSlide
-                    mediaType={mediaType}
-                    mediaCategory={tmdbConfigs.mediaCategory.top_rated}
-                  />
-                )}
-              </Container> 
-              {/* media recommendation */}
             </Box>
           </>
         )

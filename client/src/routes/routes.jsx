@@ -1,13 +1,15 @@
 import HomePage from "../pages/HomePage";
-import PersonDetail from "../pages/PersonDetail";
 import FavoriteList from "../pages/FavoriteList";
 import MediaDetail from "../pages/MediaDetail";
 import MediaList from "../pages/MediaList";
 import MediaSearch from "../pages/MediaSearch";
 import PasswordUpdate from "../pages/PasswordUpdate";
-import ReviewList from "../pages/ReviewList";
+import BookingList from "../pages/BookingList";
 import ProtectedPage from "../components/common/ProtectedPage";
-
+import AddedMovieList from "../pages/AddedMovieList";
+import ProtectedPageAdmin from "../components/common/ProtectedPageAdmin";
+import AddMovie from "../pages/AddMovie";
+import FixMovie from "../pages/FixMovie";
 export const routesGen = {
   home: "/",
   mediaList: "/movie",
@@ -15,7 +17,10 @@ export const routesGen = {
   mediaSearch: "/search",
   favoriteList: "/favorites",
   bookingList: "/bookings",
-  passwordUpdate: "/password-update"
+  passwordUpdate: "/password-update",
+  addMovie: "/addmovie",
+  listMovie: "/listmovie",
+  update: (id) => `/update/${id}`
 };
 
 const routes = [
@@ -23,11 +28,6 @@ const routes = [
     index: true,
     element: <HomePage />,
     state: "home"
-  },
-  {
-    path: "/person/:personId",
-    element: <PersonDetail />,
-    state: "person.detail"
   },
   {
     path: "/search",
@@ -56,7 +56,7 @@ const routes = [
     path: "/bookings",
     element: (
       <ProtectedPage>
-        <ReviewList />
+        <BookingList />
       </ProtectedPage>
     ),
     state: "bookings"
@@ -68,6 +68,28 @@ const routes = [
   {
     path: "/movie/:id",
     element: <MediaDetail />
+  },
+  {
+    path: "/addmovie",
+    element: (
+      <ProtectedPageAdmin>
+        <AddMovie />
+      </ProtectedPageAdmin>
+    ),
+    state: "add"
+  },
+  {
+    path: "/listmovie",
+    element: (
+      <ProtectedPageAdmin>
+        <AddedMovieList />
+      </ProtectedPageAdmin>
+    ),
+    state: "list"
+  },
+  {
+    path: "/update/:id",
+    element: <FixMovie />
   }
 ];
 

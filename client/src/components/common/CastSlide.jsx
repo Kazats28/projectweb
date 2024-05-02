@@ -1,9 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
-import tmdbConfigs from "../../api/configs/tmdb.configs";
 import uiConfigs from "../../configs/ui.configs";
-import { routesGen } from "../../routes/routes";
 
 const CastSlide = ({ casts }) => {
   return (
@@ -21,7 +19,7 @@ const CastSlide = ({ casts }) => {
       >
         {casts.map((cast, index) => (
           <SwiperSlide key={index}>
-            <Link /*to={routesGen.person(cast.id)}*/>
+            <Link>
               <Box sx={{
                 paddingTop: "120%",
                 color: "text.primary",

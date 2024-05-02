@@ -1,4 +1,4 @@
-import { Box, Typography, CircularProgress } from "@mui/material";
+import { Box, Typography, CircularProgress, Rating } from "@mui/material";
 
 const CircularRate = ({ value }) => {
   return (
@@ -7,7 +7,16 @@ const CircularRate = ({ value }) => {
       display: "inline-block",
       width: "max-content"
     }}>
-      <CircularProgress variant="determinate" value={value * 10} color="success" size={50} />
+      <Rating
+        name="rating"
+        value={(value / 10)}
+        precision={0.1}
+        min={0}
+        max={1}
+        size="large"
+        fontSize="medium"
+        />
+      {/* <CircularProgress variant="determinate" value={value * 10} color="success" size={50} /> */}
       <Box sx={{
         position: "absolute",
         top: 0,

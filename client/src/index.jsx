@@ -8,7 +8,7 @@ import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
-axios.defaults.baseURL = "http://localhost:8282";
+axios.defaults.baseURL = "https://webn16-a8a4133f12c6.herokuapp.com";
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   // <React.StrictMode>

@@ -7,11 +7,8 @@ import { toast } from "react-toastify";
 import MediaItem from "../components/common/MediaItem";
 import Container from "../components/common/Container";
 import uiConfigs from "../configs/ui.configs";
-import favoriteApi from "../api/modules/favorite.api";
 import { setGlobalLoading } from "../redux/features/globalLoadingSlice";
-import { removeFavorite } from "../redux/features/userSlice";
 import { getUserFavorite, deleteFavorite} from "../api-helpers/api-helpers";
-import favoriteUtils from "../utils/favorite.utils";
 import dayjs from "dayjs";
 const FavoriteItem = ({ favorite, onRemoved }) => {
   const dispatch = useDispatch();
@@ -32,10 +29,11 @@ const FavoriteItem = ({ favorite, onRemoved }) => {
 
   return (<>
     <MediaItem 
-      id={favorite.movie._id}
+      id={favorite.movie.id}
       posterUrl={favorite.movie.posterUrl}
       releaseDate={dayjs(favorite.movie.releaseDate).format("DD-MM-YYYY")}
       title={favorite.movie.title}
+      rate={favorite.movie.averageRating}
     />
     <LoadingButton
       fullWidth
@@ -59,7 +57,7 @@ const FavoriteList = () => {
 
   const dispatch = useDispatch();
 
-  const skip = 4;
+  const skip = 12;
 
   useEffect(() => {
     const getFavorites = async () => {

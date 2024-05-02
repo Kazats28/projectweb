@@ -4,13 +4,13 @@ import Footer from "../common/Footer";
 import GlobalLoading from "../common/GlobalLoading";
 import Topbar from "../common/Topbar";
 import AuthModal from "../common/AuthModal";
+import AdminModal from "../common/AdminModal";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
-import { toast } from "react-toastify";
 import userApi from "../../api/modules/user.api";
-import favoriteApi from "../../api/modules/favorite.api";
-import { setListFavorites, setUser } from "../../redux/features/userSlice";
-import {getUserFavorite} from "../../api-helpers/api-helpers";
+import { setUser } from "../../redux/features/userSlice";
+import { getAdminById } from "../../api-helpers/api-helpers";
+import { setAdmin } from "../../redux/features/adminSlice";
 const MainLayout = () => {
   const dispatch = useDispatch();
 
@@ -26,14 +26,17 @@ const MainLayout = () => {
 
     authUser();
   }, [dispatch]);
+  useEffect(() => {
+    const authAdmin = async () => {
+      getAdminById()
+        .then((res) => {
+          dispatch(setAdmin(res));
+        })
+        .catch((err) => dispatch(setAdmin(null)));
+    };
 
-  // useEffect(() => {    
-  //   getUserFavorite()
-  //     .then((data) => dispatch(setListFavorites(data.favorites)))
-  //     .catch((err) => console.log(err));
-  //   if (!user) dispatch(setListFavorites([]));
-  // }, [user, dispatch]);
-
+    authAdmin();
+  }, [dispatch]);
   return (
     <>
       {/* global loading */}
@@ -43,7 +46,7 @@ const MainLayout = () => {
       {/* login modal */}
       <AuthModal />
       {/* login modal */}
-
+      <AdminModal />
       <Box display="flex" minHeight="100vh">
         {/* header */}
         <Topbar />
